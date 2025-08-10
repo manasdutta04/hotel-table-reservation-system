@@ -31,16 +31,28 @@ def sign_up():
 def log_in():
     user_name = entry_1.get()
     password = entry_2.get()
+    
     if len(user_name) == 0 or len(password) == 0:
-        tkinter.messagebox.showinfo("Welcome to Royal Embassy.", "Invalid Username Or Password")
+        tkinter.messagebox.showerror("Login Error", "Please enter both username and password")
+        return
+    
+    login_class = PersistentHashTable()
+    status = login_class.login(user_name, password)
+    
+    if status == "successfully":
+        tkinter.messagebox.showinfo("Login Successful", f"Welcome back, {user_name}!")
+        window.destroy()
+        call(["python", "reservation.py"])
+    elif status == "invalid":
+        tkinter.messagebox.showerror("Login Failed", "Invalid username or password")
+    elif status.startswith("locked_out_"):
+        remaining_time = status.split("_")[-1]
+        minutes = int(remaining_time) // 60
+        seconds = int(remaining_time) % 60
+        tkinter.messagebox.showerror("Account Locked", 
+            f"Too many failed login attempts. Account locked for {minutes}m {seconds}s")
     else:
-        login_class = PersistentHashTable()
-        status = login_class.login(user_name, password)
-        if status == "successfully":
-            window.destroy()
-            call(["python", "reservation.py"])
-        elif status == "invalid":
-            tkinter.messagebox.showinfo("Welcome to Royal Embassy.", "Invalid Username Or Password")
+        tkinter.messagebox.showerror("Login Error", "Login failed. Please try again.")
 
 
 window = Tk()

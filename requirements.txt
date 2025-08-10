@@ -1,0 +1,26 @@
+# Hotel Table Reservation System Requirements
+
+# Core GUI Framework
+tkinter  # Usually included with Python
+
+# Excel/Spreadsheet handling
+openpyxl>=3.0.0
+
+# Email functionality
+smtplib  # Built-in Python module
+
+# Security enhancements
+bcrypt>=4.0.0
+
+# Standard library modules (included with Python)
+# hashlib
+# os
+# datetime
+# queue
+# subprocess
+# pathlib
+# base64
+# secrets
+# string
+# re
+# time

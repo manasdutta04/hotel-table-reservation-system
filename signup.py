@@ -3,6 +3,7 @@ from subprocess import call
 from login_backend import *
 from pathlib import Path
 from login_backend import *
+from security_utils import PasswordValidator, InputSanitizer
 # Explicit imports to satisfy Flake8
 from tkinter import Tk, Canvas, Entry, Button, PhotoImage
 import tkinter.messagebox
@@ -27,20 +28,46 @@ def sign_up():
     user_name = entry_1.get()
     password = entry_2.get()
     cn_password = entry_3.get()
-    if len(user_name) <= 5:
-        tkinter.messagebox.showinfo("Welcome to Royal Embassy.", "UserName Should be More Than 5 Character")
-    elif len(user_name) == 0 or len(password) == 0 or len(cn_password) == 0:
-        tkinter.messagebox.showinfo("Welcome to Royal Embassy.", "Invalid Username Or Password")
-    elif password != cn_password:
-        tkinter.messagebox.showinfo("Welcome to Royal Embassy.", "Both Passwords Are Not Same")
-    elif password == cn_password and len(user_name) >= 5:
-        login_class = PersistentHashTable()
-        status = login_class.insert(user_name, password)
-        if status == "successfully":
-            window.destroy()
-            call(["python", "reservation.py"])
-        elif status == "already":
-            tkinter.messagebox.showinfo("Welcome to Royal Embassy.", "UserName Already Exists")
+    
+    # Basic input validation
+    if len(user_name) == 0 or len(password) == 0 or len(cn_password) == 0:
+        tkinter.messagebox.showerror("Registration Error", "All fields are required")
+        return
+    
+    # Validate username
+    sanitized_username = InputSanitizer.sanitize_username(user_name)
+    if not sanitized_username:
+        tkinter.messagebox.showerror("Registration Error", 
+            "Username must be 3-50 characters long and contain only letters, numbers, and underscores")
+        return
+    
+    # Check password match
+    if password != cn_password:
+        tkinter.messagebox.showerror("Registration Error", "Passwords do not match")
+        return
+    
+    # Validate password strength
+    is_strong, password_errors = PasswordValidator.validate_password_strength(password)
+    if not is_strong:
+        error_message = "Password requirements not met:\n" + "\n".join(password_errors)
+        tkinter.messagebox.showerror("Weak Password", error_message)
+        return
+    
+    # Attempt to register user
+    login_class = PersistentHashTable()
+    status = login_class.insert(sanitized_username, password)
+    
+    if status == "successfully":
+        tkinter.messagebox.showinfo("Registration Successful", 
+            f"Welcome {sanitized_username}! Your account has been created successfully.")
+        window.destroy()
+        call(["python", "reservation.py"])
+    elif status == "already":
+        tkinter.messagebox.showerror("Registration Error", "Username already exists. Please choose a different username.")
+    elif status == "invalid_username":
+        tkinter.messagebox.showerror("Registration Error", "Invalid username format.")
+    else:
+        tkinter.messagebox.showerror("Registration Error", "Registration failed. Please try again.")
 
 
 def relative_to_assets(path: str) -> Path:
